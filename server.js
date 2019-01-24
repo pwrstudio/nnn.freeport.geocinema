@@ -157,23 +157,22 @@ const satelliteList = [
   }
 ]
 
-const API_KEY = '8WB4S8-SWUPDN-SW6JEM-3Y0K'
+// const API_KEY = '8WB4S8-SWUPDN-SW6JEM-3Y0K'
+const API_KEY = 'NTPS43-TLBST7-EGGYB2-3Y0Q'
 
-console.log('☎️ Listening on port: 9090')
+console.log('* Listening on port => ', PORT)
 server.listen(PORT)
 
 var satelliteData = []
-
-
 
 // Initialize satellite data
 getSatelliteData()
 
 // Get satellite data every 5 minutes
-new CronJob('*/1 * * * *', () => {
+new CronJob('*/5 * * * *', () => {
   getSatelliteData()
-  console.log('CRONED')
-}, null, true, 'America/Los_Angeles');
+  console.log('**** CRONED')
+}, null, true, 'Europe/Berlin');
 
 function getSatelliteData() {
   console.log('📡', ' Getting satellite data...')
