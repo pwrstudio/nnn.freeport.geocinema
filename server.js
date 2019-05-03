@@ -1,8 +1,10 @@
 const PORT = process.env.PORT || 9090
 const server = require('http').createServer()
 const io = require('socket.io')(server)
+
 const CronJob = require('cron').CronJob
 const axios = require('axios')
+const geoip = require('geoip-lite')
 
 const satelliteList = [
   {
@@ -232,4 +234,30 @@ function getSatelliteData() {
 io.sockets.on('connection', socket => {
   console.log('📲', 'Connection from', socket.id)
   io.to(socket.id).emit('update', satelliteData)
+
+  let clientIp = socket.handshake.headers['x-forwarded-for'] || '95.91.244.172'
+  let clientGeo = geoip.lookup(clientIp)
+
+  // console.log(clientIp)
+  // console.log(clientGeo)
+
+  var weatherData = {}
+  var newsData = {}
+
+  let weatherUrl = 'https://api.openweathermap.org/data/2.5/weather?q=' + clientGeo.city + '&APPID=09870534f263964280e70097f5a6499c'
+  let weatherPromise = axios.get(weatherUrl).catch(e => console.log)
+
+  let newsUrl = 'https://content.guardianapis.com/search?q=' + clientGeo.city + '&api-key=58130b2b-cac8-4cae-97e9-cb93a204f97d'
+  // let newsUrl = 'https://content.guardianapis.com/search?api-key=58130b2b-cac8-4cae-97e9-cb93a204f97d'
+  let newsPromise = axios.get(newsUrl).catch(e => console.log)
+
+  Promise.all([newsPromise, weatherPromise]).then(data => {
+    console.log(data[0].data.response.results[0])
+    console.log('emitting stats to', socket.id)
+    var returnData = { geo: clientGeo, weather: data[1].data.main, news: data[0].data.response.results[0] }
+    io.to(socket.id).emit('init', returnData)
+    // io.to(socket.id).emit('init',)
+  }).catch(e => console.log)
+
 })
+
