@@ -202,17 +202,7 @@ function getSatelliteData() {
           // Add positions...
           for (let i = 0; i < satelliteData.length; i++) {
             if (satelliteData[i].id === satellite.id) {
-              // TEMP
               satelliteData[i].positions = response.data.positions
-              // satelliteData[i].positions.push(response.data.positions)
-              // // Trim array
-              // console.log(satelliteData[i].positions.length)
-              // if (satelliteData[i].positions.length >= 600) {
-              //   console.log('truncating')
-              //   satelliteData[i].positions.length = 600
-              // }
-              // console.log(satelliteData[i].positions.length)
-              // satelliteData[i].positions = satelliteData[i].positions.slice(0, 600);
             }
           }
         }
@@ -238,11 +228,16 @@ io.sockets.on('connection', socket => {
   let clientIp = socket.handshake.headers['x-forwarded-for'] || '95.91.244.172'
   let clientGeo = geoip.lookup(clientIp)
 
-  // console.log(clientIp)
-  // console.log(clientGeo)
+  console.log(clientIp)
+  console.log(clientGeo)
 
   var weatherData = {}
   var newsData = {}
+
+  if (!clientGeo.city) {
+    console.log('empty')
+    clientGeo.city = 'berlin'
+  }
 
   let weatherUrl = 'https://api.openweathermap.org/data/2.5/weather?q=' + clientGeo.city + '&APPID=09870534f263964280e70097f5a6499c'
   let weatherPromise = axios.get(weatherUrl).catch(e => console.log)
@@ -252,11 +247,11 @@ io.sockets.on('connection', socket => {
   let newsPromise = axios.get(newsUrl).catch(e => console.log)
 
   Promise.all([newsPromise, weatherPromise]).then(data => {
-    console.log(data[0].data.response.results[0])
-    console.log('emitting stats to', socket.id)
+    // console.log(data[0].data.response.results)
+    console.log('emitting stats to:', socket.id)
     var returnData = { geo: clientGeo, weather: data[1].data.main, news: data[0].data.response.results[0] }
+    console.log(returnData)
     io.to(socket.id).emit('init', returnData)
-    // io.to(socket.id).emit('init',)
   }).catch(e => console.log)
 
 })
